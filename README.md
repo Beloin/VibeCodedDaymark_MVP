@@ -1,16 +1,25 @@
 # daymark
 
-A new Flutter project.
+An app based on a calendar, checkmarks for dates, a way to track what have you done daily. It can create new fields for each new Daymark that I want to add.
 
-## Getting Started
+Something like showing a calendar with the dates that can be inserted:
 
-This project is a starting point for a Flutter application.
+| Study Programming |
+| -------------     |
+| [X] [0] [x] [0] [0] [0] |
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+| Run |
+| -------------     |
+| [X] [x] [x] [0] [0] [0] |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+and so on showing almost like a calendar of dates
+
+1. the main screen should only show thies minimized cards.
+2. There should have a button to checkmark that day
+2. Cards could be opened and be read, all check that day that was forgotten
+3. Services shuould be created and create abstract call to a driver that saves current state. The first driver implementation will be a IO driver, 
+but later we will implement an API driver.
+4. Should follow flutter folder structutre, also services shgould be inside lib/services
+

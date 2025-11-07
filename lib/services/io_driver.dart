@@ -19,6 +19,11 @@ class IODriver implements HabitService {
   static const String _tableHabits = 'habits';
   static const String _tableHabitEntries = 'habit_entries';
 
+  /// Initialize the database - must be called before any operations
+  Future<void> initialize() async {
+    _database ??= await _initDatabase();
+  }
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
@@ -265,35 +270,48 @@ class IODriver implements HabitService {
   FutureResult<bool, ErrorCode> markHabitForToday(String habitId, bool isCompleted) async {
     try {
       final today = DateTime.now();
-      final entryResult = await getHabitEntry(habitId, today);
+      final db = await database;
       
-      return await entryResult.when(
-        success: (entry) async {
-          final updatedEntry = entry.copyWith(
-            isCompleted: isCompleted,
-            completedAt: isCompleted ? DateTime.now() : null,
-          );
-          
-          if (entry.id.startsWith('${habitId}_')) {
-            // This was a default entry, need to create it
-            return await createHabitEntry(updatedEntry).then((result) {
-              return result.when(
-                success: (_) => const Success(true),
-                failure: (error) => Failure(error),
-              );
-            });
-          } else {
-            // Existing entry, update it
-            return await updateHabitEntry(updatedEntry).then((result) {
-              return result.when(
-                success: (_) => const Success(true),
-                failure: (error) => Failure(error),
-              );
-            });
-          }
-        },
-        failure: (error) => Failure(error),
+      // Check if entry exists in database
+      final List<Map<String, dynamic>> existingEntries = await db.query(
+        _tableHabitEntries,
+        where: 'habitId = ? AND date = ?',
+        whereArgs: [habitId, today.toIso8601String()],
       );
+      
+      final entryExists = existingEntries.isNotEmpty;
+      
+      if (entryExists) {
+        // Update existing entry
+        final existingEntry = HabitEntryModel.fromJson(existingEntries.first);
+        final updatedEntry = existingEntry.copyWith(
+          isCompleted: isCompleted,
+          completedAt: isCompleted ? DateTime.now() : null,
+        );
+        
+        return await updateHabitEntry(updatedEntry.toEntity()).then((result) {
+          return result.when(
+            success: (_) => const Success(true),
+            failure: (error) => Failure(error),
+          );
+        });
+      } else {
+        // Create new entry
+        final newEntry = HabitEntry(
+          id: '${habitId}_${today.toIso8601String()}',
+          habitId: habitId,
+          date: today,
+          isCompleted: isCompleted,
+          completedAt: isCompleted ? DateTime.now() : null,
+        );
+        
+        return await createHabitEntry(newEntry).then((result) {
+          return result.when(
+            success: (_) => const Success(true),
+            failure: (error) => Failure(error),
+          );
+        });
+      }
     } catch (e) {
       return Failure.withAppError(StorageError('Failed to mark habit for today'));
     }

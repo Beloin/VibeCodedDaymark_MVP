@@ -1,0 +1,83 @@
+@startuml Service Abstraction Layer Workflow
+
+!define RECTANGLE class
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+}
+
+title Service Abstraction Layer Workflow
+
+package "Domain Layer" {
+    RECTANGLE "UseCase" as UseCase
+    RECTANGLE "HabitRepository Interface" as RepoInterface
+    RECTANGLE "Entities" as Entities
+}
+
+package "Data Layer" {
+    RECTANGLE "HabitRepositoryImpl" as RepoImpl
+    RECTANGLE "HabitService Interface" as ServiceInterface
+    RECTANGLE "IODriver" as IODriver
+    RECTANGLE "Data Models" as DataModels
+}
+
+package "Persistence" {
+    RECTANGLE "SQLite Database" as Database
+    RECTANGLE "Schema Management" as Schema
+}
+
+UseCase -> RepoInterface : Call repository method
+RepoInterface -> RepoImpl : Implementation call
+RepoImpl -> ServiceInterface : Call service method
+ServiceInterface -> IODriver : Concrete implementation
+
+IODriver -> Database : Execute SQL operation
+
+alt Query Operation
+    Database -> IODriver : Return query results
+    IODriver -> DataModels : Map to data models
+    DataModels -> Entities : Convert to domain entities
+else Mutation Operation
+    Database -> IODriver : Return operation result
+end
+
+IODriver -> ServiceInterface : Wrap in Result<T, ErrorCode>
+ServiceInterface -> RepoImpl : Return result
+RepoImpl -> RepoInterface : Return result
+RepoInterface -> UseCase : Return result
+
+note right of ServiceInterface
+    Result Pattern:
+    - Success(T data) for success
+    - Failure(ErrorCode) for errors
+    - Type-safe error handling
+end note
+
+package "Future Extensibility" {
+    RECTANGLE "FirebaseDriver" as FirebaseDriver
+    RECTANGLE "MockDriver" as MockDriver
+    RECTANGLE "HybridDriver" as HybridDriver
+}
+
+ServiceInterface --> FirebaseDriver : Potential implementation
+ServiceInterface --> MockDriver : Testing implementation
+ServiceInterface --> HybridDriver : Combined strategy
+
+package "Testing Strategy" {
+    RECTANGLE "Unit Tests" as UnitTests
+    RECTANGLE "Integration Tests" as IntegrationTests
+    RECTANGLE "Performance Tests" as PerformanceTests
+}
+
+UnitTests -> MockDriver : Mock service for testing
+IntegrationTests -> IODriver : Test actual database
+PerformanceTests -> Database : Verify performance
+
+@enduml

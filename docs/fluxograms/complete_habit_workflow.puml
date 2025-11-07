@@ -1,0 +1,72 @@
+@startuml Complete Habit Workflow
+
+!define RECTANGLE class
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+}
+
+title Complete Habit Workflow
+
+package "Presentation Layer" {
+    RECTANGLE "HabitCard Widget" as HabitCard
+    RECTANGLE "HomePage" as HomePage
+    RECTANGLE "HabitBloc" as HabitBloc
+}
+
+package "Domain Layer" {
+    RECTANGLE "HabitEntry Entity" as HabitEntry
+    RECTANGLE "MarkHabitToday UseCase" as MarkUseCase
+    RECTANGLE "GetTodayEntries UseCase" as GetEntriesUseCase
+}
+
+package "Data Layer" {
+    RECTANGLE "HabitRepositoryImpl" as RepoImpl
+    RECTANGLE "HabitService" as HabitService
+    RECTANGLE "IODriver" as IODriver
+    RECTANGLE "SQLite Database" as Database
+}
+
+HabitCard -> HomePage : User taps card
+HomePage -> HabitBloc : MarkHabitCompleted event
+HabitBloc -> MarkUseCase : Execute use case
+MarkUseCase -> RepoImpl : markHabitForToday(habitId, completed)
+RepoImpl -> HabitService : markHabitForToday(habitId, completed)
+HabitService -> IODriver : markHabitForToday(habitId, completed)
+
+IODriver -> Database : Check if entry exists for today
+Database -> IODriver : Return entry status
+
+alt Entry Exists
+    IODriver -> Database : UPDATE habit_entries
+else Entry Does Not Exist
+    IODriver -> Database : INSERT INTO habit_entries
+end
+
+Database -> IODriver : Operation success
+IODriver -> HabitService : Success(true)
+HabitService -> RepoImpl : Success(true)
+RepoImpl -> MarkUseCase : Success(true)
+MarkUseCase -> HabitBloc : Success(true)
+
+HabitBloc -> GetEntriesUseCase : Load today's entries
+GetEntriesUseCase -> RepoImpl : getTodayEntries()
+RepoImpl -> HabitService : getTodayEntries()
+HabitService -> IODriver : getTodayEntries()
+IODriver -> Database : SELECT * FROM habit_entries WHERE date = today
+Database -> IODriver : Return today's entries
+IODriver -> HabitService : Success(entries)
+HabitService -> RepoImpl : Success(entries)
+RepoImpl -> GetEntriesUseCase : Success(entries)
+GetEntriesUseCase -> HabitBloc : Success(entries)
+HabitBloc -> HomePage : HabitLoaded with updated entries
+HomePage -> HabitCard : Rebuild with new completion state
+
+@enduml

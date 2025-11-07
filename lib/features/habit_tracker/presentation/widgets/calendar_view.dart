@@ -39,17 +39,21 @@ class CalendarView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                 IconButton(
-                   onPressed: onPreviousMonth,
-                   icon: Icon(
-                     Icons.chevron_left,
-                     color: theme.colorScheme.primary,
-                     size: 28,
-                   ),
-                   style: IconButton.styleFrom(
-                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                     shape: RoundedRectangleBorder(
-                       borderRadius: BorderRadius.circular(12),
+                 Semantics(
+                   label: 'Previous month',
+                   button: true,
+                   child: IconButton(
+                     onPressed: onPreviousMonth,
+                     icon: Icon(
+                       Icons.chevron_left,
+                       color: theme.colorScheme.primary,
+                       size: 28,
+                     ),
+                     style: IconButton.styleFrom(
+                       backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                       shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(12),
+                       ),
                      ),
                    ),
                  ),
@@ -60,17 +64,21 @@ class CalendarView extends StatelessWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                 IconButton(
-                   onPressed: onNextMonth,
-                   icon: Icon(
-                     Icons.chevron_right,
-                     color: theme.colorScheme.primary,
-                     size: 28,
-                   ),
-                   style: IconButton.styleFrom(
-                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                     shape: RoundedRectangleBorder(
-                       borderRadius: BorderRadius.circular(12),
+                 Semantics(
+                   label: 'Next month',
+                   button: true,
+                   child: IconButton(
+                     onPressed: onNextMonth,
+                     icon: Icon(
+                       Icons.chevron_right,
+                       color: theme.colorScheme.primary,
+                       size: 28,
+                     ),
+                     style: IconButton.styleFrom(
+                       backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                       shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(12),
+                       ),
                      ),
                    ),
                  ),
@@ -147,58 +155,66 @@ class CalendarView extends StatelessWidget {
     required int completedCount,
     required ThemeData theme,
   }) {
-    return Container(
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isToday ? theme.colorScheme.primaryContainer : Colors.transparent,
-        border: isToday
-            ? Border.all(color: theme.colorScheme.primary, width: 2)
-            : null,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Day number
-          Text(
-            day.toString(),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: isToday 
-                ? theme.colorScheme.onPrimaryContainer
-                : theme.colorScheme.onSurface,
-              fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
+    final date = DateTime(currentMonth.year, currentMonth.month, day);
+    final dateFormatted = DateFormat('MMMM d, yyyy').format(date);
+    
+    return Semantics(
+      label: isToday 
+        ? 'Today, $dateFormatted, $completedCount habits completed'
+        : '$dateFormatted, $completedCount habits completed',
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isToday ? theme.colorScheme.primaryContainer : Colors.transparent,
+          border: isToday
+              ? Border.all(color: theme.colorScheme.primary, width: 2)
+              : null,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Day number
+            Text(
+              day.toString(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isToday 
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSurface,
+                fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
-          ),
-          
-          // Completion indicator
-          if (completedCount > 0)
-            Positioned(
-              top: 2,
-              right: 2,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _getCompletionColor(completedCount, theme),
-                  border: Border.all(
-                    color: theme.colorScheme.surface,
-                    width: 1.5,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    completedCount > 9 ? '9+' : completedCount.toString(),
-                    style: TextStyle(
+            
+            // Completion indicator
+            if (completedCount > 0)
+              Positioned(
+                top: 2,
+                right: 2,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _getCompletionColor(completedCount, theme),
+                    border: Border.all(
                       color: theme.colorScheme.surface,
-                      fontSize: 6,
-                      fontWeight: FontWeight.bold,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      completedCount > 9 ? '9+' : completedCount.toString(),
+                      style: TextStyle(
+                        color: theme.colorScheme.surface,
+                        fontSize: 6,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

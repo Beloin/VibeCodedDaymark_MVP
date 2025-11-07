@@ -15,7 +15,7 @@ class HabitEntryModel extends HabitEntry {
       id: json['id'] as String,
       habitId: json['habitId'] as String,
       date: DateTime.parse(json['date'] as String),
-      isCompleted: json['isCompleted'] as bool? ?? false,
+      isCompleted: (json['isCompleted'] as int) == 1,
       completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt'] as String) : null,
     );
   }
@@ -25,7 +25,7 @@ class HabitEntryModel extends HabitEntry {
       'id': id,
       'habitId': habitId,
       'date': date.toIso8601String(),
-      'isCompleted': isCompleted,
+      'isCompleted': isCompleted ? 1 : 0,
       'completedAt': completedAt?.toIso8601String(),
     };
   }

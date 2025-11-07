@@ -55,3 +55,8 @@ final class Failure<S, E> extends Result<S, E> {
   }
 }
 ```
+
+## Build check
+
+- After some code changes, run `flutter build apk` and see if there's any error
+- Do not timeout this build, as it usually can take a long time

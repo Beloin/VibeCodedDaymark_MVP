@@ -1,0 +1,56 @@
+@startuml Create New Habit Workflow
+
+!define RECTANGLE class
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+}
+
+title Create New Habit Workflow
+
+package "Presentation Layer" {
+    RECTANGLE "HomePage Widget" as HomePage
+    RECTANGLE "HabitBloc" as HabitBloc
+    RECTANGLE "Create Habit Dialog" as CreateDialog
+}
+
+package "Domain Layer" {
+    RECTANGLE "Habit Entity" as HabitEntity
+    RECTANGLE "CreateHabit UseCase" as CreateUseCase
+    RECTANGLE "HabitRepository Interface" as RepoInterface
+}
+
+package "Data Layer" {
+    RECTANGLE "HabitRepositoryImpl" as RepoImpl
+    RECTANGLE "HabitService" as HabitService
+    RECTANGLE "IODriver" as IODriver
+    RECTANGLE "SQLite Database" as Database
+}
+
+HomePage -> CreateDialog : User clicks create
+CreateDialog -> HomePage : User enters details
+HomePage -> HabitBloc : CreateHabit event
+HabitBloc -> CreateUseCase : Execute use case
+CreateUseCase -> RepoInterface : createHabit(habit)
+RepoInterface -> RepoImpl : Implementation call
+RepoImpl -> HabitService : createHabit(habit)
+HabitService -> IODriver : createHabit(habit)
+IODriver -> Database : INSERT INTO habits
+Database -> IODriver : Return created record
+IODriver -> HabitService : Success(habit)
+HabitService -> RepoImpl : Success(habit)
+RepoImpl -> RepoInterface : Success(habit)
+RepoInterface -> CreateUseCase : Success(habit)
+CreateUseCase -> HabitBloc : Success(habit)
+HabitBloc -> HomePage : HabitCreated state
+HomePage -> HabitBloc : LoadHabits event
+HabitBloc -> HomePage : Updated habits list
+
+@enduml

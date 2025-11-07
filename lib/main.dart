@@ -47,7 +47,7 @@ class DaymarkApp extends StatelessWidget {
 
 Future<void> _seedSampleData() async {
   try {
-    // Check if we already have habits
+    // Database is already initialized via dependency injection
     final habitService = sl<HabitService>();
     final result = await habitService.getHabits();
     await result.when(
@@ -58,7 +58,7 @@ Future<void> _seedSampleData() async {
         }
       },
       failure: (error) async {
-        // If there's an error (likely no habits table yet), seed the data
+        // If there's an error, seed the data
         await SampleData.seedDatabase(habitService);
       },
     );

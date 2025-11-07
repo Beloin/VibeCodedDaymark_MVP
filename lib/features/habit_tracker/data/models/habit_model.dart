@@ -18,7 +18,7 @@ class HabitModel extends Habit {
       description: json['description'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : null,
-      isActive: json['isActive'] as bool? ?? true,
+      isActive: (json['isActive'] as int) == 1,
     );
   }
 
@@ -29,7 +29,7 @@ class HabitModel extends Habit {
       'description': description,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
-      'isActive': isActive,
+      'isActive': isActive ? 1 : 0,
     };
   }
 

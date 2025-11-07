@@ -1,0 +1,68 @@
+@startuml Calendar Navigation Workflow
+
+!define RECTANGLE class
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+}
+
+title Calendar Navigation Workflow
+
+package "Presentation Layer" {
+    RECTANGLE "CalendarView Widget" as CalendarView
+    RECTANGLE "HomePage" as HomePage
+    RECTANGLE "Navigation Buttons" as NavButtons
+}
+
+package "Business Logic" {
+    RECTANGLE "Month Calculations" as MonthCalc
+    RECTANGLE "Grid Generation" as GridGen
+    RECTANGLE "Completion Data" as CompletionData
+}
+
+CalendarView -> NavButtons : User clicks previous/next
+NavButtons -> HomePage : Navigation event
+HomePage -> CalendarView : Update currentMonth state
+CalendarView -> MonthCalc : Calculate new month data
+MonthCalc -> GridGen : Generate 6-week grid
+GridGen -> CompletionData : Apply completion indicators
+CompletionData -> CalendarView : Render updated calendar
+
+note right of CalendarView
+    Grid Calculation Steps:
+    1. Calculate days in month
+    2. Determine starting weekday
+    3. Generate 42-cell grid
+    4. Build day cells
+    5. Apply completion data
+    6. Highlight today
+end note
+
+package "Calendar Features" {
+    RECTANGLE "Month Navigation" as MonthNav
+    RECTANGLE "Completion Visualization" as CompletionViz
+    RECTANGLE "Responsive Layout" as ResponsiveLayout
+}
+
+MonthNav -> CompletionViz : Update completion display
+CompletionViz -> ResponsiveLayout : Adapt to screen size
+ResponsiveLayout -> CalendarView : Final rendering
+
+package "User Interactions" {
+    RECTANGLE "Button Navigation" as ButtonNav
+    RECTANGLE "Visual Feedback" as VisualFeedback
+    RECTANGLE "Accessibility" as Accessibility
+}
+
+ButtonNav -> VisualFeedback : Provide user feedback
+VisualFeedback -> Accessibility : Ensure screen reader support
+Accessibility -> CalendarView : Accessible calendar
+
+@enduml

@@ -12,8 +12,10 @@ final GetIt sl = GetIt.instance;
 
 /// Initialize dependency injection
 Future<void> initDependencies() async {
-  // Services
-  sl.registerLazySingleton<HabitService>(() => IODriver());
+  // Services - initialize database first
+  final ioDriver = IODriver();
+  await ioDriver.initialize();
+  sl.registerLazySingleton<HabitService>(() => ioDriver);
   
   // Repositories
   sl.registerLazySingleton<HabitRepository>(

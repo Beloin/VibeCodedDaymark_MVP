@@ -1,0 +1,72 @@
+@startuml View Habits and History Workflow
+
+!define RECTANGLE class
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam package {
+    BackgroundColor White
+    BorderColor Black
+}
+
+title View Habits and History Workflow
+
+package "Presentation Layer" {
+    RECTANGLE "HomePage" as HomePage
+    RECTANGLE "HabitCard" as HabitCard
+    RECTANGLE "CalendarView" as CalendarView
+    RECTANGLE "ResponsiveWidget" as ResponsiveWidget
+}
+
+package "Domain Layer" {
+    RECTANGLE "Habit Entity" as HabitEntity
+    RECTANGLE "HabitEntry Entity" as HabitEntry
+    RECTANGLE "GetHabits UseCase" as GetHabitsUseCase
+    RECTANGLE "GetTodayEntries UseCase" as GetEntriesUseCase
+}
+
+package "Data Layer" {
+    RECTANGLE "HabitRepositoryImpl" as RepoImpl
+    RECTANGLE "HabitService" as HabitService
+    RECTANGLE "IODriver" as IODriver
+    RECTANGLE "SQLite Database" as Database
+}
+
+HomePage -> GetHabitsUseCase : Load habits on init
+GetHabitsUseCase -> RepoImpl : getHabits()
+RepoImpl -> HabitService : getHabits()
+HabitService -> IODriver : getHabits()
+IODriver -> Database : SELECT * FROM habits
+Database -> IODriver : Return habits
+IODriver -> HabitService : Success(habits)
+HabitService -> RepoImpl : Success(habits)
+RepoImpl -> GetHabitsUseCase : Success(habits)
+GetHabitsUseCase -> HomePage : Success(habits)
+
+HomePage -> GetEntriesUseCase : Load today's entries
+GetEntriesUseCase -> RepoImpl : getTodayEntries()
+RepoImpl -> HabitService : getTodayEntries()
+HabitService -> IODriver : getTodayEntries()
+IODriver -> Database : SELECT * FROM habit_entries WHERE date = today
+Database -> IODriver : Return today's entries
+IODriver -> HabitService : Success(entries)
+HabitService -> RepoImpl : Success(entries)
+RepoImpl -> GetEntriesUseCase : Success(entries)
+GetEntriesUseCase -> HomePage : Success(entries)
+
+HomePage -> ResponsiveWidget : Build responsive layout
+ResponsiveWidget -> HabitCard : Render habit cards
+ResponsiveWidget -> CalendarView : Render calendar
+
+HabitCard -> HomePage : User expands card
+HomePage -> HabitCard : Show detailed history
+
+CalendarView -> HomePage : User navigates months
+HomePage -> CalendarView : Update month display
+CalendarView -> HomePage : Load historical data (future)
+
+@enduml

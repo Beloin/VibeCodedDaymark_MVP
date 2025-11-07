@@ -71,7 +71,17 @@ class HabitRepositoryImpl implements HabitRepository {
   }
 
   @override
+  FutureResult<List<HabitEntry>, ErrorCode> getDateEntries(DateTime date) {
+    return service.getDateEntries(date);
+  }
+
+  @override
   FutureResult<bool, ErrorCode> markHabitForToday(String habitId, bool isCompleted) {
     return service.markHabitForToday(habitId, isCompleted);
+  }
+
+  @override
+  FutureResult<bool, ErrorCode> markHabitForDate(String habitId, bool isCompleted, DateTime date) {
+    return service.markHabitForDate(habitId, isCompleted, date);
   }
 }

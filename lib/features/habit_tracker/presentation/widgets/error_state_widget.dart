@@ -8,6 +8,8 @@ class ErrorStateWidget extends StatelessWidget {
   final VoidCallback onRetry;
   final String? customTitle;
   final String? customDescription;
+  final bool showClearCacheOption;
+  final VoidCallback? onClearCache;
 
   const ErrorStateWidget({
     super.key,
@@ -15,6 +17,8 @@ class ErrorStateWidget extends StatelessWidget {
     required this.onRetry,
     this.customTitle,
     this.customDescription,
+    this.showClearCacheOption = false,
+    this.onClearCache,
   });
 
   @override
@@ -61,45 +65,66 @@ class ErrorStateWidget extends StatelessWidget {
             const SizedBox(height: 24),
             
             // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                OutlinedButton(
-                  onPressed: onRetry,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton(
+                      onPressed: onRetry,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Try Again'),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                    
+                    const SizedBox(width: 12),
+                    
+                    ElevatedButton(
+                      onPressed: () {
+                        // Could implement more advanced error handling here
+                        onRetry();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Reload'),
                     ),
-                  ),
-                  child: const Text('Try Again'),
+                  ],
                 ),
                 
-                const SizedBox(width: 12),
-                
-                ElevatedButton(
-                  onPressed: () {
-                    // Could implement more advanced error handling here
-                    onRetry();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                if (showClearCacheOption && onClearCache != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: TextButton(
+                      onPressed: onClearCache,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text('Clear Cache & Retry'),
                     ),
                   ),
-                  child: const Text('Reload'),
-                ),
               ],
             ),
           ],
@@ -162,10 +187,14 @@ class NetworkErrorState extends StatelessWidget {
 /// Data loading error state
 class DataLoadingErrorState extends StatelessWidget {
   final VoidCallback onRetry;
+  final VoidCallback? onClearCache;
+  final bool showClearCacheOption;
 
   const DataLoadingErrorState({
     super.key,
     required this.onRetry,
+    this.onClearCache,
+    this.showClearCacheOption = false,
   });
 
   @override
@@ -175,6 +204,8 @@ class DataLoadingErrorState extends StatelessWidget {
       onRetry: onRetry,
       customTitle: 'Data Loading Failed',
       customDescription: 'We couldn\'t load your habit data. This might be a temporary issue.',
+      showClearCacheOption: showClearCacheOption,
+      onClearCache: onClearCache,
     );
   }
 }

@@ -10,6 +10,8 @@ class HabitCard extends StatefulWidget {
   final bool isExpanded;
   final VoidCallback? onToggleCompletion;
   final VoidCallback? onToggleExpand;
+  final VoidCallback? onDelete;
+  final bool isLoading;
 
   const HabitCard({
     super.key,
@@ -18,6 +20,8 @@ class HabitCard extends StatefulWidget {
     this.isExpanded = false,
     this.onToggleCompletion,
     this.onToggleExpand,
+    this.onDelete,
+    this.isLoading = false,
   });
 
   @override
@@ -42,16 +46,16 @@ class _HabitCardState extends State<HabitCard> {
     final isCompleted = widget.todayEntry?.isCompleted ?? false;
     final theme = Theme.of(context);
     
-    return Semantics(
+    Widget cardContent = Semantics(
       label: 'Habit: ${widget.habit.name}',
       value: isCompleted ? 'Completed' : 'Not completed',
       hint: widget.isExpanded ? 'Double tap to collapse details' : 'Double tap to expand details',
+      // Announce loading state to screen readers
+      liveRegion: widget.isLoading,
       child: GestureDetector(
         onLongPress: () {
-          // Long press to quickly toggle completion
-          if (widget.onToggleCompletion != null) {
-            widget.onToggleCompletion!();
-          }
+          // Show context menu on long press
+          _showContextMenu(context);
         },
         onDoubleTap: () {
           // Double tap to toggle expansion
@@ -124,7 +128,7 @@ class _HabitCardState extends State<HabitCard> {
                       ),
                     ],
                   ),
-              
+          
                   // Expanded content with optimized animation
                   AnimatedSize(
                     duration: const Duration(milliseconds: 300),
@@ -201,43 +205,111 @@ class _HabitCardState extends State<HabitCard> {
         ),
       ),
     );
+
+    // Wrap in Dismissible for swipe-to-delete if onDelete callback is provided
+    if (widget.onDelete != null) {
+      return Dismissible(
+        key: Key('habit_${widget.habit.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.error,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(right: 20),
+              child: Icon(
+                Icons.delete,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          // Show confirmation dialog
+          final confirmed = await _showDeleteConfirmationDialog(context);
+          return confirmed;
+        },
+        onDismissed: (direction) {
+          if (widget.onDelete != null) {
+            widget.onDelete!();
+          }
+        },
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 
   Widget _buildCheckbox(bool isCompleted, ThemeData theme) {
     return Semantics(
-      label: isCompleted ? 'Mark ${widget.habit.name} as incomplete' : 'Mark ${widget.habit.name} as completed',
+      label: widget.isLoading 
+        ? 'Updating ${widget.habit.name}... Please wait' 
+        : isCompleted 
+          ? 'Mark ${widget.habit.name} as incomplete' 
+          : 'Mark ${widget.habit.name} as completed',
+      value: widget.isLoading ? 'Loading...' : (isCompleted ? 'Completed' : 'Not completed'),
       button: true,
+      enabled: !widget.isLoading,
       child: GestureDetector(
-        onTap: widget.onToggleCompletion,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-             color: isCompleted 
-               ? AppColors.success
-               : theme.colorScheme.surfaceContainerHighest,
-            shape: BoxShape.circle,
-            border: Border.all(
-               color: isCompleted 
-                 ? AppColors.success
-                 : theme.colorScheme.outline,
-              width: 2,
-            ),
-          ),
-          child: Center(
-            child: AnimatedSwitcher(
+        onTap: widget.isLoading ? null : widget.onToggleCompletion,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              child: isCompleted
-                  ? Icon(
-                      Icons.check,
-                      size: 18,
-                       color: AppColors.onSuccess,
-                      key: const ValueKey('completed'),
-                    )
-                  : const SizedBox.shrink(key: ValueKey('incomplete')),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                 color: isCompleted 
+                   ? AppColors.success
+                   : theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: Border.all(
+                   color: isCompleted 
+                     ? AppColors.success
+                     : theme.colorScheme.outline,
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isCompleted
+                      ? Icon(
+                          Icons.check,
+                          size: 18,
+                           color: AppColors.onSuccess,
+                          key: const ValueKey('completed'),
+                        )
+                      : const SizedBox.shrink(key: ValueKey('incomplete')),
+                ),
+              ),
             ),
-          ),
+            if (widget.isLoading)
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -272,5 +344,100 @@ class _HabitCardState extends State<HabitCard> {
 
   String _formatDate(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  }
+
+  Future<bool> _showDeleteConfirmationDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Habit'),
+        content: Text(
+          'Are you sure you want to delete "${widget.habit.name}"? This action cannot be undone and will also delete all associated habit entries.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    
+    return result ?? false;
+  }
+
+  void _showContextMenu(BuildContext context) {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RenderBox card = context.findRenderObject() as RenderBox;
+    final position = card.localToGlobal(Offset.zero, ancestor: overlay);
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx + card.size.width,
+        position.dy + card.size.height,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'toggle_completion',
+          child: Row(
+            children: [
+              Icon(
+                widget.todayEntry?.isCompleted ?? false 
+                  ? Icons.radio_button_unchecked 
+                  : Icons.check_circle,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                widget.todayEntry?.isCompleted ?? false 
+                  ? 'Mark as Incomplete' 
+                  : 'Mark as Complete',
+              ),
+            ],
+          ),
+        ),
+        if (widget.onDelete != null) ...[
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.delete,
+                  color: AppColors.error,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Delete Habit',
+                  style: TextStyle(
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    ).then((value) {
+      if (value == 'toggle_completion' && widget.onToggleCompletion != null) {
+        widget.onToggleCompletion!();
+      } else if (value == 'delete' && widget.onDelete != null) {
+        _showDeleteConfirmationDialog(context).then((confirmed) {
+          if (confirmed) {
+            widget.onDelete!();
+          }
+        });
+      }
+    });
   }
 }

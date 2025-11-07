@@ -30,7 +30,10 @@ class DaymarkApp extends StatelessWidget {
           create: (context) => HabitBloc(
             getHabits: sl(),
             getTodayEntries: sl(),
-            markHabitToday: sl(),
+            getDateEntries: sl(),
+            markHabitForDate: sl(),
+            createHabit: sl(),
+            deleteHabit: sl(),
           ),
         ),
       ],

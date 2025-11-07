@@ -21,5 +21,7 @@ abstract class HabitRepository {
 
   // Batch operations
   FutureResult<List<HabitEntry>, ErrorCode> getTodayEntries();
+  FutureResult<List<HabitEntry>, ErrorCode> getDateEntries(DateTime date);
   FutureResult<bool, ErrorCode> markHabitForToday(String habitId, bool isCompleted);
+  FutureResult<bool, ErrorCode> markHabitForDate(String habitId, bool isCompleted, DateTime date);
 }

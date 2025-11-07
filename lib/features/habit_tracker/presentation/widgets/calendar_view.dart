@@ -8,6 +8,8 @@ class CalendarView extends StatelessWidget {
   final Map<DateTime, int> completionData; // Date -> number of completed habits
   final VoidCallback? onPreviousMonth;
   final VoidCallback? onNextMonth;
+  final Function(DateTime)? onDaySelected;
+  final DateTime? selectedDate;
 
   const CalendarView({
     super.key,
@@ -15,6 +17,8 @@ class CalendarView extends StatelessWidget {
     required this.completionData,
     this.onPreviousMonth,
     this.onNextMonth,
+    this.onDaySelected,
+    this.selectedDate,
   });
 
   @override
@@ -130,10 +134,12 @@ class CalendarView extends StatelessWidget {
                 final date = DateTime(currentMonth.year, currentMonth.month, day);
                 final completedCount = completionData[date] ?? 0;
                 final isToday = _isSameDay(date, DateTime.now());
+                final isSelected = selectedDate != null && _isSameDay(date, selectedDate!);
                 
                 return _buildCalendarDay(
                   day: day,
                   isToday: isToday,
+                  isSelected: isSelected,
                   completedCount: completedCount,
                   theme: theme,
                 );
@@ -152,6 +158,7 @@ class CalendarView extends StatelessWidget {
   Widget _buildCalendarDay({
     required int day,
     required bool isToday,
+    required bool isSelected,
     required int completedCount,
     required ThemeData theme,
   }) {
@@ -162,58 +169,71 @@ class CalendarView extends StatelessWidget {
       label: isToday 
         ? 'Today, $dateFormatted, $completedCount habits completed'
         : '$dateFormatted, $completedCount habits completed',
-      child: Container(
-        margin: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isToday ? theme.colorScheme.primaryContainer : Colors.transparent,
-          border: isToday
-              ? Border.all(color: theme.colorScheme.primary, width: 2)
-              : null,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Day number
-            Text(
-              day.toString(),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: isToday 
-                  ? theme.colorScheme.onPrimaryContainer
-                  : theme.colorScheme.onSurface,
-                fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-            
-            // Completion indicator
-            if (completedCount > 0)
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _getCompletionColor(completedCount, theme),
-                    border: Border.all(
-                      color: theme.colorScheme.surface,
-                      width: 1.5,
-                    ),
+      button: onDaySelected != null,
+      child: GestureDetector(
+        onTap: onDaySelected != null ? () => onDaySelected!(date) : null,
+        child: Container(
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isSelected 
+              ? theme.colorScheme.secondaryContainer
+              : isToday 
+                ? theme.colorScheme.primaryContainer 
+                : Colors.transparent,
+            border: isSelected
+                ? Border.all(color: theme.colorScheme.secondary, width: 2)
+                : isToday
+                  ? Border.all(color: theme.colorScheme.primary, width: 2)
+                  : null,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+                // Day number
+                Text(
+                  day.toString(),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: isSelected
+                      ? theme.colorScheme.onSecondaryContainer
+                      : isToday 
+                        ? theme.colorScheme.onPrimaryContainer
+                        : theme.colorScheme.onSurface,
+                    fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w600,
+                    fontSize: 16,
                   ),
-                  child: Center(
-                    child: Text(
-                      completedCount > 9 ? '9+' : completedCount.toString(),
-                      style: TextStyle(
+                ),
+              
+              // Completion indicator
+              if (completedCount > 0)
+                Positioned(
+                  top: 2,
+                  right: 2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _getCompletionColor(completedCount, theme),
+                      border: Border.all(
                         color: theme.colorScheme.surface,
-                        fontSize: 6,
-                        fontWeight: FontWeight.bold,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        completedCount > 9 ? '9+' : completedCount.toString(),
+                        style: TextStyle(
+                          color: theme.colorScheme.surface,
+                          fontSize: 6,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -225,7 +245,9 @@ class CalendarView extends StatelessWidget {
       children: [
         _buildLegendItem('Today', theme.colorScheme.primaryContainer, theme),
         const SizedBox(width: 16),
-         _buildLegendItem('Completed', AppColors.success, theme),
+        _buildLegendItem('Selected', theme.colorScheme.secondaryContainer, theme),
+        const SizedBox(width: 16),
+        _buildLegendItem('Completed', AppColors.success, theme),
       ],
     );
   }

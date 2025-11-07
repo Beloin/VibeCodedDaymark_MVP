@@ -3,7 +3,10 @@ import 'package:daymark/features/habit_tracker/domain/repositories/habit_reposit
 import 'package:daymark/features/habit_tracker/data/repositories/habit_repository_impl.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/get_habits.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/get_today_entries.dart';
-import 'package:daymark/features/habit_tracker/domain/usecases/mark_habit_today.dart';
+import 'package:daymark/features/habit_tracker/domain/usecases/get_date_entries.dart';
+import 'package:daymark/features/habit_tracker/domain/usecases/mark_habit_for_date.dart';
+import 'package:daymark/features/habit_tracker/domain/usecases/create_habit.dart';
+import 'package:daymark/features/habit_tracker/domain/usecases/delete_habit.dart';
 import 'package:daymark/services/habit_service.dart';
 import 'package:daymark/services/io_driver.dart';
 
@@ -25,7 +28,10 @@ Future<void> initDependencies() async {
   // Use cases
   sl.registerLazySingleton(() => GetHabits(sl()));
   sl.registerLazySingleton(() => GetTodayEntries(sl()));
-  sl.registerLazySingleton(() => MarkHabitToday(sl()));
+  sl.registerLazySingleton(() => GetDateEntries(sl()));
+  sl.registerLazySingleton(() => MarkHabitForDate(sl()));
+  sl.registerLazySingleton(() => CreateHabitUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteHabitUseCase(sl()));
 }
 
 /// Reset dependencies for testing

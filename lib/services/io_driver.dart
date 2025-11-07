@@ -247,10 +247,14 @@ class IODriver implements HabitService {
 
   @override
   FutureResult<List<HabitEntry>, ErrorCode> getTodayEntries() async {
+    return getDateEntries(DateTime.now());
+  }
+
+  @override
+  FutureResult<List<HabitEntry>, ErrorCode> getDateEntries(DateTime date) async {
     try {
-      final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day);
-      final endOfDay = DateTime(today.year, today.month, today.day, 23, 59, 59);
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
       
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
@@ -262,21 +266,25 @@ class IODriver implements HabitService {
       final entries = maps.map((map) => HabitEntryModel.fromJson(map)).toList();
       return Success(entries.map((model) => model.toEntity()).toList());
     } catch (e) {
-      return Failure.withAppError(StorageError('Failed to fetch today\'s entries'));
+      return Failure.withAppError(StorageError('Failed to fetch date entries'));
     }
   }
 
   @override
   FutureResult<bool, ErrorCode> markHabitForToday(String habitId, bool isCompleted) async {
+    return markHabitForDate(habitId, isCompleted, DateTime.now());
+  }
+
+  @override
+  FutureResult<bool, ErrorCode> markHabitForDate(String habitId, bool isCompleted, DateTime date) async {
     try {
-      final today = DateTime.now();
       final db = await database;
       
       // Check if entry exists in database
       final List<Map<String, dynamic>> existingEntries = await db.query(
         _tableHabitEntries,
         where: 'habitId = ? AND date = ?',
-        whereArgs: [habitId, today.toIso8601String()],
+        whereArgs: [habitId, date.toIso8601String()],
       );
       
       final entryExists = existingEntries.isNotEmpty;
@@ -298,9 +306,9 @@ class IODriver implements HabitService {
       } else {
         // Create new entry
         final newEntry = HabitEntry(
-          id: '${habitId}_${today.toIso8601String()}',
+          id: '${habitId}_${date.toIso8601String()}',
           habitId: habitId,
-          date: today,
+          date: date,
           isCompleted: isCompleted,
           completedAt: isCompleted ? DateTime.now() : null,
         );
@@ -313,7 +321,7 @@ class IODriver implements HabitService {
         });
       }
     } catch (e) {
-      return Failure.withAppError(StorageError('Failed to mark habit for today'));
+      return Failure.withAppError(StorageError('Failed to mark habit for date'));
     }
   }
 }

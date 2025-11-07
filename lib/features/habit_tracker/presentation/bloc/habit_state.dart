@@ -105,3 +105,13 @@ class HabitError extends HabitState {
   @override
   String toString() => 'HabitError(message: $message)';
 }
+
+/// Initialization error state for database failures
+class HabitInitializationError extends HabitState {
+  final String message;
+
+  const HabitInitializationError({required this.message});
+
+  @override
+  String toString() => 'HabitInitializationError(message: $message)';
+}

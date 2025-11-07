@@ -21,7 +21,13 @@ class IODriver implements HabitService {
 
   /// Initialize the database - must be called before any operations
   Future<void> initialize() async {
-    _database ??= await _initDatabase();
+    try {
+      _database ??= await _initDatabase().timeout(const Duration(seconds: 10));
+    } catch (e) {
+      // Reset database on failure to allow retry
+      _database = null;
+      rethrow;
+    }
   }
 
   Future<Database> get database async {

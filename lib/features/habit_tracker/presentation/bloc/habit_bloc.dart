@@ -127,36 +127,53 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
         'load_habits',
       );
       
-      result.when(
+      await result.when(
         success: (habits) async {
           AppLogger.i('Successfully loaded ${habits.length} habits', tag: 'HabitBloc');
           
-          // Load today's entries immediately and emit state with both habits and entries
-          final todayEntriesResult = await getTodayEntries();
-          todayEntriesResult.when(
-            success: (entries) {
-              AppLogger.i('Successfully loaded ${entries.length} today\'s entries', tag: 'HabitBloc');
-              emit(HabitLoaded(
-                habits: habits, 
-                selectedDateEntries: entries,
-                selectedDate: DateTime.now(),
-              ));
-            },
-            failure: (error) {
-              AppLogger.e(
-                'Failed to load today\'s entries, using empty entries', 
-                tag: 'HabitBloc', 
-                error: error.toString(),
-                stackTrace: StackTrace.current,
-              );
-              // Emit state with empty entries but don't fail completely
-              emit(HabitLoaded(
-                habits: habits, 
-                selectedDateEntries: const [],
-                selectedDate: DateTime.now(),
-              ));
-            },
-          );
+          // Load today's entries with timeout protection
+          try {
+            final todayEntriesResult = await getTodayEntries().timeout(const Duration(seconds: 5));
+            todayEntriesResult.when(
+              success: (entries) {
+                AppLogger.i('Successfully loaded ${entries.length} today\'s entries', tag: 'HabitBloc');
+                emit(HabitLoaded(
+                  habits: habits, 
+                  selectedDateEntries: entries,
+                  selectedDate: DateTime.now(),
+                ));
+              },
+              failure: (error) {
+                AppLogger.e(
+                  'Failed to load today\'s entries, using empty entries', 
+                  tag: 'HabitBloc', 
+                  error: error.toString(),
+                  stackTrace: StackTrace.current,
+                );
+                // Emit state with empty entries but don't fail completely
+                emit(HabitLoaded(
+                  habits: habits, 
+                  selectedDateEntries: const [],
+                  selectedDate: DateTime.now(),
+                  isRefreshing: false,
+                ));
+              },
+            );
+          } on TimeoutException {
+            AppLogger.e(
+              'Timeout loading today\'s entries, using empty entries', 
+              tag: 'HabitBloc', 
+              error: 'Timeout',
+              stackTrace: StackTrace.current,
+            );
+            // Emit state with empty entries but don't fail completely
+            emit(HabitLoaded(
+              habits: habits, 
+              selectedDateEntries: const [],
+              selectedDate: DateTime.now(),
+              isRefreshing: false,
+            ));
+          }
         },
         failure: (error) {
           AppLogger.e(

@@ -32,14 +32,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Load initial data - only habits, today's entries will be loaded automatically
     AppLogger.i('Initializing home page - loading habits', tag: 'HomePage');
-    _loadInitialData();
-  }
-
-  void _loadInitialData() {
-    // Add a small delay to ensure the widget is fully built
-    Future.delayed(const Duration(milliseconds: 100), () {
-      context.read<HabitBloc>().add(const LoadHabits());
-    });
+    context.read<HabitBloc>().add(const LoadHabits());
   }
 
   void _toggleCardExpansion(String habitId) {
@@ -190,6 +183,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  String? _getLoadingText(HabitState state) {
+    if (state is HabitLoading) {
+      if (state.isMarkingCompletion) return 'Updating habit...';
+      if (state.isDeleting) return 'Deleting habit...';
+      if (state.isCreating) return 'Creating habit...';
+      if (state.isRefreshing) return 'Refreshing...';
+    } else if (state is HabitLoaded) {
+      if (state.isMarkingCompletion) return 'Updating habit...';
+      if (state.isDeleting) return 'Deleting habit...';
+      if (state.isCreating) return 'Creating habit...';
+      if (state.isRefreshing) return 'Refreshing...';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,13 +211,7 @@ class _HomePageState extends State<HomePage> {
       ),
       body: BlocBuilder<HabitBloc, HabitState>(
         builder: (context, state) {
-          // Only show loading overlay for initial loading and refreshing
-          // Individual habit operations (marking completion, deleting) should not trigger full overlay
-          final shouldShowLoadingOverlay = state.isLoading && 
-              !(state is HabitLoaded && 
-                ((state as HabitLoaded).isMarkingCompletion || 
-                 (state as HabitLoaded).isDeleting || 
-                 (state as HabitLoaded).isCreating));
+          final isLoading = state.isLoading;
           
           Widget content;
           
@@ -462,7 +464,7 @@ class _HomePageState extends State<HomePage> {
                                               (state as HabitLoaded).isMarkingCompletion && 
                                               (state as HabitLoaded).loadingHabitId == habit.id,
                                  );
-                              },
+                             },
                             ),
                           ),
                         ],
@@ -477,7 +479,8 @@ class _HomePageState extends State<HomePage> {
           }
           
            return LoadingOverlay(
-             isLoading: shouldShowLoadingOverlay,
+             isLoading: isLoading && !(state is HabitLoaded && (state as HabitLoaded).isMarkingCompletion),
+             loadingText: _getLoadingText(state),
              child: content,
            );
         },

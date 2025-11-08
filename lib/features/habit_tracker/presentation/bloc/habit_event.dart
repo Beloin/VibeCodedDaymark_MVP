@@ -54,3 +54,14 @@ class DeleteHabit extends HabitEvent {
     required this.habitId,
   });
 }
+
+/// Event to load historical habit entries for tile view
+class LoadHistoricalEntries extends HabitEvent {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const LoadHistoricalEntries({
+    required this.startDate,
+    required this.endDate,
+  });
+}

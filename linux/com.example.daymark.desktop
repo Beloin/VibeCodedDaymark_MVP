@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Daymark
+Comment=A beautiful habit tracking application
+Exec=daymark
+Icon=daymark
+Categories=Utility;
+Keywords=habit;tracker;productivity;
+StartupNotify=false
+Terminal=false

@@ -1,0 +1,87 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Line art D for Daymark with colorful lines -->
+  
+  <!-- Colorful D outline with gradient strokes -->
+  <defs>
+    <linearGradient id="dGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4285F4;stop-opacity:1" />
+      <stop offset="25%" style="stop-color:#34A853;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FBBC05;stop-opacity:1" />
+      <stop offset="75%" style="stop-color:#EA4335;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4285F4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main D shape with colorful gradient stroke -->
+  <path 
+    d="M10 10 
+       C10 6 14 4 18 4 
+       C22 4 26 6 26 10 
+       L26 20 
+       C26 24 22 26 18 26 
+       L10 26 
+       L10 20 
+       C10 16 10 10 10 10" 
+    fill="none" 
+    stroke="url(#dGradient)" 
+    stroke-width="3" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"/>
+  
+  <!-- Inner decorative lines with individual colors -->
+  <path 
+    d="M14 14 
+       C14 12 16 10 18 10 
+       C20 10 22 12 22 14 
+       L22 16 
+       C22 18 20 20 18 20 
+       L14 20 
+       L14 16 
+       C14 14 14 14 14 14" 
+    fill="none" 
+    stroke="#4285F4" 
+    stroke-width="1.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"/>
+  
+  <!-- Top accent line -->
+  <path 
+    d="M12 8 L16 6 L20 6 L24 8" 
+    fill="none" 
+    stroke="#34A853" 
+    stroke-width="1.5" 
+    stroke-linecap="round"/>
+  
+  <!-- Right accent line -->
+  <path 
+    d="M28 12 L30 16 L30 20 L28 24" 
+    fill="none" 
+    stroke="#FBBC05" 
+    stroke-width="1.5" 
+    stroke-linecap="round"/>
+  
+  <!-- Bottom accent line -->
+  <path 
+    d="M24 28 L20 30 L16 30 L12 28" 
+    fill="none" 
+    stroke="#EA4335" 
+    stroke-width="1.5" 
+    stroke-linecap="round"/>
+  
+  <!-- Left accent line -->
+  <path 
+    d="M8 24 L6 20 L6 16 L8 12" 
+    fill="none" 
+    stroke="#4285F4" 
+    stroke-width="1.5" 
+    stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle 
+    cx="18" 
+    cy="18" 
+    r="1" 
+    fill="#34A853" 
+    stroke="#FBBC05" 
+    stroke-width="0.5"/>
+</svg>

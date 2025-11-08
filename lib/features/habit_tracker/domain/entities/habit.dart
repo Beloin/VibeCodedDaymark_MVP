@@ -3,6 +3,7 @@ class Habit {
   final String id;
   final String name;
   final String description;
+  final String color; // Hex color code for the habit
   final DateTime createdAt;
   final DateTime? updatedAt;
   final bool isActive;
@@ -11,6 +12,7 @@ class Habit {
     required this.id,
     required this.name,
     required this.description,
+    this.color = '#2196F3', // Default blue color
     required this.createdAt,
     this.updatedAt,
     this.isActive = true,
@@ -20,6 +22,7 @@ class Habit {
     String? id,
     String? name,
     String? description,
+    String? color,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
@@ -28,6 +31,7 @@ class Habit {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
+      color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,

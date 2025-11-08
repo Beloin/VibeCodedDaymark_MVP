@@ -49,6 +49,7 @@ class HabitLoading extends HabitState {
 class HabitLoaded extends HabitState {
   final List<Habit> habits;
   final List<HabitEntry> selectedDateEntries;
+  final Map<String, List<HabitEntry>> historicalEntries;
   final DateTime selectedDate;
   final bool isMarkingCompletion;
   final bool isDeleting;
@@ -59,6 +60,7 @@ class HabitLoaded extends HabitState {
   const HabitLoaded({
     required this.habits,
     this.selectedDateEntries = const [],
+    this.historicalEntries = const {},
     required this.selectedDate,
     this.isMarkingCompletion = false,
     this.isDeleting = false,
@@ -73,6 +75,7 @@ class HabitLoaded extends HabitState {
   HabitLoaded copyWith({
     List<Habit>? habits,
     List<HabitEntry>? selectedDateEntries,
+    Map<String, List<HabitEntry>>? historicalEntries,
     DateTime? selectedDate,
     bool? isMarkingCompletion,
     bool? isDeleting,
@@ -83,6 +86,7 @@ class HabitLoaded extends HabitState {
     return HabitLoaded(
       habits: habits ?? this.habits,
       selectedDateEntries: selectedDateEntries ?? this.selectedDateEntries,
+      historicalEntries: historicalEntries ?? this.historicalEntries,
       selectedDate: selectedDate ?? this.selectedDate,
       isMarkingCompletion: isMarkingCompletion ?? this.isMarkingCompletion,
       isDeleting: isDeleting ?? this.isDeleting,
@@ -94,6 +98,52 @@ class HabitLoaded extends HabitState {
 
   @override
   String toString() => 'HabitLoaded(habits: ${habits.length}, selectedDateEntries: ${selectedDateEntries.length}, selectedDate: $selectedDate, isLoading: $isLoading, loadingHabitId: $loadingHabitId)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    
+    if (other is! HabitLoaded) return false;
+    
+    final isEqual = 
+        const ListEquality().equals(habits, other.habits) &&
+        const ListEquality().equals(selectedDateEntries, other.selectedDateEntries) &&
+        const MapEquality(values: ListEquality()).equals(historicalEntries, other.historicalEntries) &&
+        selectedDate == other.selectedDate &&
+        isMarkingCompletion == other.isMarkingCompletion &&
+        isDeleting == other.isDeleting &&
+        isCreating == other.isCreating &&
+        isRefreshing == other.isRefreshing &&
+        loadingHabitId == other.loadingHabitId;
+    
+    // Log equality comparison for debugging
+    if (!isEqual) {
+      AppLogger.i('HabitLoaded equality check failed - states are different', tag: 'HabitState');
+      AppLogger.i('  habits: ${habits.length} vs ${other.habits.length}', tag: 'HabitState');
+      AppLogger.i('  selectedDateEntries: ${selectedDateEntries.length} vs ${other.selectedDateEntries.length}', tag: 'HabitState');
+      AppLogger.i('  historicalEntries: ${historicalEntries.length} vs ${other.historicalEntries.length}', tag: 'HabitState');
+      AppLogger.i('  selectedDate: $selectedDate vs ${other.selectedDate}', tag: 'HabitState');
+      AppLogger.i('  loading flags: $isMarkingCompletion/$isDeleting/$isCreating/$isRefreshing vs ${other.isMarkingCompletion}/${other.isDeleting}/${other.isCreating}/${other.isRefreshing}', tag: 'HabitState');
+      AppLogger.i('  loadingHabitId: $loadingHabitId vs ${other.loadingHabitId}', tag: 'HabitState');
+    }
+    
+    return isEqual;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      const ListEquality().hash(habits),
+      const ListEquality().hash(selectedDateEntries),
+      const MapEquality(values: ListEquality()).hash(historicalEntries),
+      selectedDate,
+      isMarkingCompletion,
+      isDeleting,
+      isCreating,
+      isRefreshing,
+      loadingHabitId,
+    );
+  }
 }
 
 /// Error state

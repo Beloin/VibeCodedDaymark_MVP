@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:collection/collection.dart';
 import 'package:daymark/features/habit_tracker/domain/entities/habit.dart';
 import 'package:daymark/features/habit_tracker/domain/entities/habit_entry.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/get_habits.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/get_today_entries.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/get_date_entries.dart';
+import 'package:daymark/features/habit_tracker/domain/usecases/get_habit_entries.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/mark_habit_for_date.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/create_habit.dart';
 import 'package:daymark/features/habit_tracker/domain/usecases/delete_habit.dart';
@@ -18,6 +20,7 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
   final GetHabits getHabits;
   final GetTodayEntries getTodayEntries;
   final GetDateEntries getDateEntries;
+  final GetHabitEntries getHabitEntries;
   final MarkHabitForDate markHabitForDate;
   final CreateHabitUseCase createHabit;
   final DeleteHabitUseCase deleteHabit;
@@ -34,6 +37,7 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
     required this.getHabits,
     required this.getTodayEntries,
     required this.getDateEntries,
+    required this.getHabitEntries,
     required this.markHabitForDate,
     required this.createHabit,
     required this.deleteHabit,
@@ -41,6 +45,7 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
     on<LoadHabits>(_onLoadHabits);
     on<LoadTodayEntries>(_onLoadTodayEntries);
     on<LoadDateEntries>(_onLoadDateEntries);
+    on<LoadHistoricalEntries>(_onLoadHistoricalEntries);
     on<MarkHabitCompleted>(_onMarkHabitCompleted);
     on<CreateHabit>(_onCreateHabit);
     on<DeleteHabit>(_onDeleteHabit);
@@ -229,16 +234,23 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
       final result = await getDateEntries(event.date);
       result.when(
         success: (entries) {
-          AppLogger.i('Successfully loaded ${entries.length} entries for date', tag: 'HabitBloc');
+          AppLogger.i('Successfully loaded ${entries.length} entries for date ${event.date}', tag: 'HabitBloc');
+          
+          // Log completion status for debugging
+          final completedEntries = entries.where((e) => e.isCompleted).length;
+          AppLogger.i('Date entries - total: ${entries.length}, completed: $completedEntries', tag: 'HabitBloc');
+          
           emit(currentState.copyWith(
             selectedDateEntries: entries,
             selectedDate: event.date,
             isMarkingCompletion: false,
           ));
+          
+          AppLogger.i('HabitLoaded state emitted with updated date entries - isMarkingCompletion set to false', tag: 'HabitBloc');
         },
         failure: (error) {
           AppLogger.e(
-            'Failed to load date entries', 
+            'Failed to load date entries for ${event.date}', 
             tag: 'HabitBloc', 
             error: error.toString(),
             stackTrace: StackTrace.current,
@@ -251,6 +263,69 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
           ));
         },
       );
+    }
+  }
+
+  Future<void> _onLoadHistoricalEntries(LoadHistoricalEntries event, Emitter<HabitState> emit) async {
+    if (state is HabitLoaded) {
+      AppLogger.i('Loading historical entries from ${event.startDate} to ${event.endDate}', tag: 'HabitBloc');
+      final currentState = state as HabitLoaded;
+      
+      AppLogger.i('Processing ${currentState.habits.length} habits for historical data', tag: 'HabitBloc');
+      
+      // Load historical data for each habit
+      final Map<String, List<HabitEntry>> historicalEntries = {};
+      int totalEntriesLoaded = 0;
+      int habitsProcessed = 0;
+      
+      for (final habit in currentState.habits) {
+        AppLogger.i('Loading historical entries for habit "${habit.name}" (${habit.id})', tag: 'HabitBloc');
+        try {
+          final result = await getHabitEntries(habit.id, event.startDate, event.endDate);
+          result.when(
+            success: (entries) {
+              AppLogger.i('Successfully loaded ${entries.length} historical entries for habit "${habit.name}"', tag: 'HabitBloc');
+              historicalEntries[habit.id] = entries;
+              totalEntriesLoaded += entries.length;
+              habitsProcessed++;
+              
+              // Log detailed entry information for debugging
+              final completedEntries = entries.where((e) => e.isCompleted).length;
+              AppLogger.i('Habit "${habit.name}" - total entries: ${entries.length}, completed: $completedEntries', tag: 'HabitBloc');
+            },
+            failure: (error) {
+              AppLogger.e(
+                'Failed to load historical entries for habit "${habit.name}"', 
+                tag: 'HabitBloc', 
+                error: error.toString(),
+                stackTrace: StackTrace.current,
+              );
+              // Use empty list for failed habit
+              historicalEntries[habit.id] = [];
+              habitsProcessed++;
+            },
+          );
+        } catch (e) {
+          AppLogger.e(
+            'Exception loading historical entries for habit "${habit.name}"', 
+            tag: 'HabitBloc', 
+            error: e.toString(),
+            stackTrace: StackTrace.current,
+          );
+          historicalEntries[habit.id] = [];
+          habitsProcessed++;
+        }
+      }
+      
+      AppLogger.i('Historical data loading completed - ${habitsProcessed} habits processed, ${totalEntriesLoaded} total entries loaded', tag: 'HabitBloc');
+      AppLogger.i('Emitting HabitLoaded state with updated historical entries', tag: 'HabitBloc');
+      
+      emit(currentState.copyWith(
+        historicalEntries: historicalEntries,
+        isRefreshing: false,
+      ));
+      
+      AppLogger.i('HabitLoaded state emitted with historical data for ${historicalEntries.length} habits', tag: 'HabitBloc');
     }
   }
 
@@ -282,9 +357,13 @@ class HabitBloc extends Bloc<HabitEvent, HabitState> {
         
         result.when(
           success: (_) {
-            AppLogger.i('Successfully marked habit completion', tag: 'HabitBloc');
+            AppLogger.i('Successfully marked habit completion - triggering date entries reload', tag: 'HabitBloc');
             // Reload entries for the current selected date to reflect the change
             add(LoadDateEntries(date: currentState.selectedDate));
+            
+            // Historical data reload is now handled by the HomePage listener
+            // to prevent race conditions and state conflicts
+            AppLogger.i('Habit completion marked - HomePage will handle historical data sync', tag: 'HabitBloc');
           },
           failure: (error) {
             AppLogger.e(

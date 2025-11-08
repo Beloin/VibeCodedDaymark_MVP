@@ -4,7 +4,8 @@ import 'package:daymark/app/di/dependency_injection.dart';
 import 'package:daymark/app/shared/theme/app_theme.dart';
 import 'package:daymark/app/shared/utils/logger.dart';
 import 'package:daymark/features/habit_tracker/presentation/bloc/habit_bloc.dart';
-import 'package:daymark/features/habit_tracker/presentation/pages/home_page.dart';
+import 'package:daymark/features/habit_tracker/presentation/bloc/config_bloc.dart';
+import 'package:daymark/features/habit_tracker/presentation/pages/home_page_refactored_fixed.dart';
 import 'package:daymark/services/habit_service.dart';
 import 'package:daymark/services/sample_data.dart';
 
@@ -33,21 +34,17 @@ class DaymarkApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<HabitBloc>(
-          create: (context) => HabitBloc(
-            getHabits: sl(),
-            getTodayEntries: sl(),
-            getDateEntries: sl(),
-            markHabitForDate: sl(),
-            createHabit: sl(),
-            deleteHabit: sl(),
-          ),
+          create: (context) => sl<HabitBloc>(),
+        ),
+        BlocProvider<ConfigBloc>(
+          create: (context) => sl<ConfigBloc>(),
         ),
       ],
       child: MaterialApp(
         title: 'Daymark',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        home: const HomePage(),
+        home: const HomePageRefactoredFixed(),
         debugShowCheckedModeBanner: false,
       ),
     );

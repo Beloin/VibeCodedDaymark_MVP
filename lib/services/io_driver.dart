@@ -3,14 +3,17 @@ import 'package:daymark/app/shared/errors/error_code.dart';
 import 'package:daymark/app/shared/errors/app_error.dart';
 import 'package:daymark/features/habit_tracker/data/models/habit_model.dart';
 import 'package:daymark/features/habit_tracker/data/models/habit_entry_model.dart';
+import 'package:daymark/features/habit_tracker/data/models/config_model.dart';
 import 'package:daymark/features/habit_tracker/domain/entities/habit.dart';
 import 'package:daymark/features/habit_tracker/domain/entities/habit_entry.dart';
+import 'package:daymark/features/habit_tracker/domain/entities/app_config.dart';
 import 'package:daymark/services/habit_service.dart';
+import 'package:daymark/services/config_service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 /// IO driver implementation using SQLite for local storage
-class IODriver implements HabitService {
+class IODriver implements HabitService, ConfigService {
   static Database? _database;
   static const String _dbName = 'daymark.db';
   static const int _dbVersion = 1;
@@ -18,6 +21,7 @@ class IODriver implements HabitService {
   // Table names
   static const String _tableHabits = 'habits';
   static const String _tableHabitEntries = 'habit_entries';
+  static const String _tableConfig = 'app_config';
 
   /// Initialize the database - must be called before any operations
   Future<void> initialize() async {
@@ -40,19 +44,24 @@ class IODriver implements HabitService {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _dbName);
 
-    return await openDatabase(
+    var database = await openDatabase(
       path,
       version: _dbVersion,
-      onCreate: _createTables,
     );
+
+    // Create anyways on start
+    _createTables(database, _dbVersion);
+
+    return database;
   }
 
   Future<void> _createTables(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE $_tableHabits (
+      CREATE TABLE IF NOT EXISTS $_tableHabits (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT NOT NULL,
+        color TEXT NOT NULL DEFAULT '#2196F3',
         createdAt TEXT NOT NULL,
         updatedAt TEXT,
         isActive INTEGER NOT NULL DEFAULT 1
@@ -60,7 +69,7 @@ class IODriver implements HabitService {
     ''');
 
     await db.execute('''
-      CREATE TABLE $_tableHabitEntries (
+      CREATE TABLE IF NOT EXISTS $_tableHabitEntries (
         id TEXT PRIMARY KEY,
         habitId TEXT NOT NULL,
         date TEXT NOT NULL,
@@ -68,6 +77,17 @@ class IODriver implements HabitService {
         completedAt TEXT,
         FOREIGN KEY (habitId) REFERENCES $_tableHabits(id) ON DELETE CASCADE,
         UNIQUE(habitId, date)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $_tableConfig (
+        id TEXT PRIMARY KEY,
+        preferredView TEXT NOT NULL,
+        weeksToDisplay INTEGER NOT NULL,
+        habitColorsJson TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT
       )
     ''');
   }
@@ -328,6 +348,118 @@ class IODriver implements HabitService {
       }
     } catch (e) {
       return Failure.withAppError(StorageError('Failed to mark habit for date'));
+    }
+  }
+
+  // Configuration Service Implementation
+  @override
+  FutureResult<AppConfig, ErrorCode> getConfig() async {
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> maps = await db.query(_tableConfig);
+      
+      if (maps.isEmpty) {
+        // Create default config if none exists
+        final defaultConfig = AppConfig.defaultConfig;
+        return await createConfig(defaultConfig);
+      }
+      
+      final config = ConfigModel.fromJson(maps.first);
+      return Success(config.toEntity());
+    } catch (e) {
+      return Failure.withAppError(StorageError('Failed to fetch configuration'));
+    }
+  }
+
+  @override
+  FutureResult<AppConfig, ErrorCode> updateConfig(AppConfig config) async {
+    try {
+      final db = await database;
+      final model = ConfigModel.fromEntity(config);
+      final updatedModel = model.copyWith(updatedAt: DateTime.now().toIso8601String());
+      
+      await db.update(
+        _tableConfig,
+        updatedModel.toJson(),
+        where: 'id = ?',
+        whereArgs: [config.id],
+      );
+      
+      return Success(updatedModel.toEntity());
+    } catch (e) {
+      return Failure.withAppError(StorageError('Failed to update configuration'));
+    }
+  }
+
+  @override
+  FutureResult<AppConfig, ErrorCode> updatePreferredView(ViewType viewType) async {
+    final configResult = await getConfig();
+    return configResult.when(
+      success: (config) => updateConfig(config.copyWith(preferredView: viewType)),
+      failure: (error) => Failure(error),
+    );
+  }
+
+  @override
+  FutureResult<AppConfig, ErrorCode> updateWeeksToDisplay(int weeks) async {
+    final configResult = await getConfig();
+    return configResult.when(
+      success: (config) => updateConfig(config.copyWith(weeksToDisplay: weeks)),
+      failure: (error) => Failure(error),
+    );
+  }
+
+  @override
+  FutureResult<AppConfig, ErrorCode> updateHabitColor(String habitId, String color) async {
+    final configResult = await getConfig();
+    return configResult.when(
+      success: (config) {
+        final updatedColors = Map<String, String>.from(config.habitColors);
+        updatedColors[habitId] = color;
+        return updateConfig(config.copyWith(habitColors: updatedColors));
+      },
+      failure: (error) => Failure(error),
+    );
+  }
+
+  @override
+  FutureResult<AppConfig, ErrorCode> removeHabitColor(String habitId) async {
+    final configResult = await getConfig();
+    return configResult.when(
+      success: (config) {
+        final updatedColors = Map<String, String>.from(config.habitColors);
+        updatedColors.remove(habitId);
+        return updateConfig(config.copyWith(habitColors: updatedColors));
+      },
+      failure: (error) => Failure(error),
+    );
+  }
+
+  @override
+  FutureResult<AppConfig, ErrorCode> resetToDefaults() async {
+    try {
+      final db = await database;
+      final defaultConfig = AppConfig.defaultConfig;
+      final model = ConfigModel.fromEntity(defaultConfig);
+      
+      await db.delete(_tableConfig);
+      await db.insert(_tableConfig, model.toJson());
+      
+      return Success(defaultConfig);
+    } catch (e) {
+      return Failure.withAppError(StorageError('Failed to reset configuration'));
+    }
+  }
+
+  /// Helper method to create initial configuration
+  FutureResult<AppConfig, ErrorCode> createConfig(AppConfig config) async {
+    try {
+      final db = await database;
+      final model = ConfigModel.fromEntity(config);
+      await db.insert(_tableConfig, model.toJson());
+      return Success(config);
+    } catch (e) {
+      return Failure.withAppError(StorageError('Failed to create configuration'));
     }
   }
 }

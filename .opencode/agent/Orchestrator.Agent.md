@@ -16,3 +16,4 @@ or achieving the project.
 3. Whenever the user requests, you must delegate the work to those who can do this.
 4. If not requested otherwise, any code changes should follow this approach: FlutterCoder.Agent Creates -> Reviewers agents review -> FlutterCoder.Agent edit based on those review.
 5. Also remember, the Reviewers CAN be run in parallel between them, but they MUST wait for FlutterCoder.Agent finish it's works.
+6. You can call the Tester.Agent, it is a skilled QA tester for the application to test the aaplication

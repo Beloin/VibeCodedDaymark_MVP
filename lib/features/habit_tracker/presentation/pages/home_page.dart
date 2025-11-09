@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:daymark/features/habit_tracker/domain/entities/habit_entry.dart';
 import 'package:daymark/features/habit_tracker/domain/entities/habit.dart';
@@ -18,7 +19,6 @@ import 'package:daymark/features/habit_tracker/presentation/widgets/add_habit_mo
 import 'package:daymark/app/shared/layout/responsive_layout.dart';
 import 'package:daymark/app/shared/utils/logger.dart';
 import 'package:daymark/app/shared/widgets/loading_overlay.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 /// Main home page with habit cards and calendar view
 class HomePage extends StatefulWidget {
@@ -620,22 +620,22 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            // Daymark logo
-            SvgPicture.asset(
-              'assets/images/daymark_logo_lineart.svg',
-              width: 32,
-              height: 32,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 12),
-            const Text('Daymark'),
-          ],
+        title: SvgPicture.asset(
+          'assets/images/daymark_logo.svg',
+          width: 32,
+          height: 32,
+          fit: BoxFit.contain,
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          _buildViewSwitcher(),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildViewSwitcher(),
+              ],
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

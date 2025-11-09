@@ -51,8 +51,8 @@ dependencies:
   
   # HTTP client for future API integration
   http: ^1.1.0
-  
-  # SVG support
+
+  # SVG rendering
   flutter_svg: ^2.0.9
   
   # Collection utilities for equality comparison
@@ -84,6 +84,7 @@ flutter:
   assets:
     - assets/images/daymark_logo.svg
     - assets/images/daymark_logo_lineart.svg
+    - assets/images/daymark_logo_simple.svg
     - assets/images/daymark_logo_48.png
     - assets/images/daymark_logo_72.png
     - assets/images/daymark_logo_96.png

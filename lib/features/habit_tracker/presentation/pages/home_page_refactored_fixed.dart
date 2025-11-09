@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../bloc/habit_bloc.dart';
@@ -17,7 +18,6 @@ import '../viewmodels/habit_view_data.dart';
 import '../../../../app/shared/layout/responsive_layout.dart';
 import '../../../../app/shared/utils/logger.dart';
 import '../../../../app/shared/widgets/loading_overlay.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../domain/entities/habit_entry.dart';
 import '../../domain/entities/app_config.dart';
 
@@ -408,18 +408,19 @@ class _HomePageRefactoredFixedState extends State<HomePageRefactoredFixed> {
           children: [
             // Daymark logo
             SvgPicture.asset(
-              'assets/images/daymark_logo_lineart.svg',
+              // Image.asset(
+              'assets/images/daymark_logo_simple.svg',
               width: 32,
               height: 32,
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 12),
-            const Text('Daymark'),
           ],
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           _buildViewSwitcher(),
+          const SizedBox(width: 12),
         ],
       ),
       floatingActionButton: FloatingActionButton(

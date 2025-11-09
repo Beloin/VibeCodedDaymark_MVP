@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Colorful D icon">
-  <!-- background (transparent) -->
+  <!-- Simplified version without filter for better Flutter compatibility -->
+  
   <!-- left rounded bar (the vertical stroke of the D) -->
   <rect x="64" y="116" width="120" height="280" rx="60" ry="60" fill="#34A853"/>
 
@@ -19,17 +20,4 @@
 
   <!-- small inner white cut so the inside of the 'D' reads as negative space -->
   <rect x="120" y="156" width="120" height="200" rx="50" ry="50" fill="white"/>
-
-  <!-- subtle outer shadow (soft) -->
-  <defs>
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-opacity="0.12"/>
-    </filter>
-  </defs>
-
-  <!-- group with shadow applied to whole icon (duplicate shapes for shadowing) -->
-  <g filter="url(#shadow)" opacity="0.95">
-    <!-- tiny translucent copy of left bar to cast softer shadow -->
-    <rect x="64" y="116" width="120" height="280" rx="60" ry="60" fill="#34A853" opacity="0.02"/>
-  </g>
 </svg>
